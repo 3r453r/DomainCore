@@ -1,4 +1,5 @@
 ﻿using DomainObjects.Customer;
+using DomainObjects.Person;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -31,6 +32,15 @@ namespace CustomerModule
         public int GetAge()
         {
             return Person.GetAge();
+        }
+
+        public void UpdatePersonData(IPersonData personData)
+        {
+            Person.FirstName = personData.FirstName;
+            Person.LastName = personData.LastName;
+            Person.OtherNames = personData.OtherNames;
+            Person.Pesel = personData.Pesel;
+            Person.BirthDate = personData.BirthDate;
         }
     }
 }

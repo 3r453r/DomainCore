@@ -22,6 +22,7 @@ namespace TestPersistence.CustomerModulePersistence
 
             IndividualCustomerRepository = new IndividualCustomerRepository(context.Customers);
             ChangesFinalized += IndividualCustomerRepository.ChangesFinalized;
+            ChangesFinalizing += IndividualCustomerRepository.ChangesFinalizing;
 
             CorporateCustomerRepository = new CorporateCustomerRepository(context.Customers);
             ChangesFinalized += CorporateCustomerRepository.ChangesFinalized;
@@ -38,9 +39,11 @@ namespace TestPersistence.CustomerModulePersistence
         public int TransactionId { get; set; }
 
         public event Action ChangesFinalized;
+
+        public event Action ChangesFinalizing;
         public void FinalizeChanges()
         {
-            var addedCustomers = TestContext.ChangeTracker.Entries<Customer>().Where(e => e.State == Microsoft.EntityFrameworkCore.EntityState.Added);
+            ChangesFinalizing();
             TestContext.SaveChanges();
             ChangesFinalized();
         }

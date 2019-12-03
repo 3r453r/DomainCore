@@ -7,5 +7,6 @@ namespace DomainObjects.Customer
 {
     public interface IIndividualCustomer : ICustomer, IPerson
     {
+        void UpdatePersonData(IPersonData personData);
     }
 }

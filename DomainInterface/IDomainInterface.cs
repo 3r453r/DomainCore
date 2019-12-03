@@ -14,5 +14,9 @@ namespace DomainInterface
         IPersonData GetCustomerPersonData(string id);
 
         ICompanyData GetCustomerCorporateData(string id);
+
+        void UpdateCustomerCompanyData(string id, ICompanyData personData);
+
+        void UpdateCustomerPersonData(string id, IPersonData personData);
     }
 }

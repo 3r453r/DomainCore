@@ -17,7 +17,8 @@ namespace TestPersistence.CustomerModulePersistence.Repositories
         {
             Customers = customers;
         }
-        private Dictionary<Customer, ICustomer> AddedCustomersMap { get; } = new Dictionary<Customer, ICustomer>();
+        private Dictionary<Customer, IIndividualCustomer> AddedCustomersMap { get; } = new Dictionary<Customer, IIndividualCustomer>();
+        private Dictionary<Customer, IIndividualCustomer> TrackingCustomersMap { get; } = new Dictionary<Customer, IIndividualCustomer>();
         private DbSet<Customer> Customers { get; }
 
         public void ChangesFinalized()
@@ -25,6 +26,18 @@ namespace TestPersistence.CustomerModulePersistence.Repositories
             foreach (var entry in AddedCustomersMap)
             {
                 entry.Value.Id = entry.Key.Id.ToString();
+            }
+        }
+
+        public void ChangesFinalizing()
+        {
+            foreach(var entry in TrackingCustomersMap)
+            {
+                entry.Key.Person.BirthDate = entry.Value.BirthDate;
+                entry.Key.Person.FirstName = entry.Value.FirstName;
+                entry.Key.Person.LastName = entry.Value.LastName;
+                entry.Key.Person.Pesel = entry.Value.Pesel;
+                entry.Key.Person.OtherNames = string.Join(",", entry.Value.OtherNames);
             }
         }
 
@@ -48,6 +61,9 @@ namespace TestPersistence.CustomerModulePersistence.Repositories
                 BirthDate = customer.Person.BirthDate,
                 Id = customer.Id.ToString()
             });
+
+            if(!TrackingCustomersMap.ContainsKey(customer))
+                TrackingCustomersMap.Add(customer, individualCustomer);
 
             return individualCustomer;
         }

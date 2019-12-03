@@ -1,6 +1,7 @@
 ﻿using CustomerModule;
 using DomainCore;
 using DomainObjects.Person;
+using Moq;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -23,11 +24,13 @@ namespace DomainCoreTest.CustomerModule
             } }
         [Theory]
         [ClassData(typeof(PersonData))]
-        public void CreatedCustomerCanBeRetrieved(IPersonData personData)
+        public void UpdatedCustomerPropertyPersists(IPersonData personData)
         {
-            string id = Domain.CreateCustomer(personData);
-            Assert.NotNull(id);
+            var mock = new Mock<IPersonData>();
+            mock.SetupGet(x => x.OtherNames).Returns(new string[0]);
+            string id = Domain.CreateCustomer(mock.Object);
 
+            Domain.UpdateCustomerPersonData(id, personData);
             var storedPerson = Domain.GetCustomerPersonData(id);
 
             Assert.Equal(personData.FirstName, storedPerson.FirstName);

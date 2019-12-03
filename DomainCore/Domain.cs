@@ -104,6 +104,31 @@ namespace DomainCore
             return customer;
         }
 
+        public void UpdateCustomerCompanyData(string id, ICompanyData companyData)
+        {
+            int transactionId = RegisterNewTransactionId();
+            var uow = CustomerModule.GetUnitOfWork(transactionId);
+
+            var customer = uow.GetCorporateCustomer(id);
+            customer.Name = companyData.Name;
+            customer.Regon = companyData.Regon;
+
+            uow.FinalizeChanges();
+            UnregisterTransactionId(transactionId);
+        }
+
+        public void UpdateCustomerPersonData(string id, IPersonData personData)
+        {
+            int transactionId = RegisterNewTransactionId();
+            var uow = CustomerModule.GetUnitOfWork(transactionId);
+
+            var customer = uow.GetIndividualCustomer(id);
+            customer.UpdatePersonData(personData);
+
+            uow.FinalizeChanges();
+            UnregisterTransactionId(transactionId);
+        }
+
         public ICustomerModule CustomerModule { get; set; }               
     }
 }
