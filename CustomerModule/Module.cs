@@ -1,41 +1,41 @@
-﻿using DomainCore;
-using DomainObjects.Company;
-using DomainObjects.Customer;
-using DomainObjects.Person;
+﻿using Domain.Entities;
+using Domain.Modules;
 using System;
-using System.Collections.Generic;
 
 namespace CustomerModule
 {
     public class Module : ICustomerModule
     {
-        public Module(ICustomerPersistence persistence)
+        private ICustomerUnitOfWork _customerUnitOfWork;
+        public ICustomerUnitOfWork CustomerUnitOfWork { set { _customerUnitOfWork = value; } }
+
+        public Module(ICustomerUnitOfWork customerUnitOfWork)
         {
-            Persistence = persistence;
+            _customerUnitOfWork = customerUnitOfWork;
         }
-        private Dictionary<int, CustomerUnitOfWork> ActiveWorkUnits { get; } = new Dictionary<int, CustomerUnitOfWork>();
-
-        public ICustomerPersistence Persistence { private get; set; }
-
-        public ICustomerUnitOfWork GetUnitOfWork(int transactionId)
+        public Customer CreateCustomer(CustomerInfo customer)
         {
-            if (ActiveWorkUnits.ContainsKey(transactionId))
-            {
-                return ActiveWorkUnits[transactionId];
-            }
-            else 
-            {
-                var cuow = new CustomerUnitOfWork(Persistence, transactionId);
-                cuow.UnitOfWorkDisposing += RemoveWorkUnit;
-                ActiveWorkUnits.Add(transactionId, cuow);
-                return cuow;
-            }            
+            return _customerUnitOfWork.CustomerRepository.New(customer);
         }
 
-        private void RemoveWorkUnit(int transactionId)
+        public Customer GetCustomer(long customerId)
         {
-            ActiveWorkUnits.Remove(transactionId);
+            return _customerUnitOfWork.CustomerRepository.Get(customerId);
         }
 
+        public void RejectChanges()
+        {
+            _customerUnitOfWork.RejectChanges();
+        }
+
+        public void SaveChanges()
+        {
+            _customerUnitOfWork.SaveChanges();
+        }
+
+        public void StageChanges()
+        {
+            _customerUnitOfWork.StageChanges();
+        }
     }
 }
