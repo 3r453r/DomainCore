@@ -13,7 +13,7 @@ namespace Domain
         IAccountModule AccountModule { set; }
 
         Task<ICreateAccountResponse> CreateAccount(ICreateAccountRequest createAccountRequest, IEmployee employee);
-        Task<ICreateAccountResponse> CreateAccount(long accountApplicationId, IEmployee employee);
+        Task<ICreateAccountResponse> ContinueCreateAccount(long accountApplicationId, IEmployee employee, string additionalInfo);
     }
 
     public class SgbDomain : ISgbDomain
@@ -51,6 +51,7 @@ namespace Domain
                 throw new DataIntegrityViolation($"No customer specified");
 
             var accountApp = _accountModule.CreateAccountApplication(employee);
+            accountApp.Nrb = createAccountRequest.Nrb;
 
             try
             {
@@ -105,7 +106,7 @@ namespace Domain
             }
         }
 
-        public async Task<ICreateAccountResponse> CreateAccount(long accountApplicationId, IEmployee employee)
+        public async Task<ICreateAccountResponse> ContinueCreateAccount(long accountApplicationId, IEmployee employee, string additionalInfo)
         {
             var accountApp = _accountModule.GetAccountApplication(accountApplicationId);
             if (accountApp == null)
@@ -117,20 +118,20 @@ namespace Domain
             {
                 case AccountApplicationStep.AddParticipants:
                     {
-                        string additionalInfo;
+                        long customerId;
                         try
                         {
-                            additionalInfo = await _environmentAdapter.GetApplicationAdditionalInfo(accountApp, "Give customerId");
+                             customerId = long.Parse(additionalInfo);
                         }
                         catch (Exception)
                         {
                             return new CreateAccountResponse { Application = accountApp };
                         }
-                        accountApp.AddApplicant(_customerModule.GetCustomer(long.Parse(additionalInfo)), CustomerProductRole.Owner);
+                        accountApp.AddApplicant(_customerModule.GetCustomer(customerId), CustomerProductRole.Owner);
                         accountApp.ApplicantsAdded();
                         _accountModule.SaveChanges();
 
-                        var response = await GetAdditionalInfo(accountApp);
+                        var response = await GetAdditionalInfo(accountApp, additionalInfo);
                         if (response.Application != null)
                             return response;
                         else
@@ -140,7 +141,7 @@ namespace Domain
                     }
                 case AccountApplicationStep.AdditionalDataCollection:
                     {
-                        var response = await GetAdditionalInfo(accountApp);
+                        var response = await GetAdditionalInfo(accountApp, additionalInfo);
                         if (response.Application != null)
                             return response;
                         else
@@ -157,21 +158,23 @@ namespace Domain
             }
         }
 
-        private async Task<CreateAccountResponse> GetAdditionalInfo(IAccountApplication accountApp)
+        private async Task<CreateAccountResponse> GetAdditionalInfo(IAccountApplication accountApp, string additionalInfo = null)
         {
-            string additionalInfo;
-            try
+            if(additionalInfo == null)
             {
-                additionalInfo = await _environmentAdapter.GetApplicationAdditionalInfo(accountApp, "Set debit");
+                try
+                {
+                    additionalInfo = await _environmentAdapter.GetApplicationAdditionalInfo(accountApp, "Set debit");
+                }
+                catch (Exception)
+                {
+                    _accountModule.SaveChanges();
+                    _customerModule.SaveChanges();
+                    return new CreateAccountResponse { Application = accountApp };
+                }
             }
-            catch (Exception)
-            {
-                _accountModule.SaveChanges();
-                _customerModule.SaveChanges();
-                return new CreateAccountResponse { Application = accountApp };
-            }
-
-            var account = _accountModule.CreateAccount(new AccountInfo { Debit = decimal.Parse(additionalInfo) }, accountApp.Applicants.First().Id);
+            
+            var account = _accountModule.CreateAccount(new AccountInfo { Debit = decimal.Parse(additionalInfo), Nrb = accountApp.Nrb }, accountApp.Applicants.First().Id);
             accountApp.AdditionalDataCollected(account);
             _accountModule.StageChanges();
             return new CreateAccountResponse { Account = account };

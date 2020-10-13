@@ -27,7 +27,7 @@ namespace Persistence.AccountModule
 
         public AccountApplication Get(decimal accountApplicationId)
         {
-            return context.AccountApplications.Find(accountApplicationId);
+            return context.AccountApplications.Find((long)accountApplicationId);
         }
 
         public AccountApplication New()

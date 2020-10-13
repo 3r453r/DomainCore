@@ -9,6 +9,7 @@ namespace Domain.Entities
     public interface IAccountApplication
     {
         long Id { get; }
+        string Nrb { get; }
         AccountApplicationStep Step { get; }
         IEmployee Operator { get; set; }
         IEnumerable<ICustomer> Applicants { get; }
@@ -34,6 +35,8 @@ namespace Domain.Entities
         public IEmployee Operator { get; set; }
 
         public IAccount Account { get; private set; }
+
+        public string Nrb { get; set; }
 
         public void AddApplicant(ICustomer customer, CustomerProductRole role) {
             if (!applicantsClosed)

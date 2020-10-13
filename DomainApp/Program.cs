@@ -19,7 +19,28 @@ namespace DomainApp
 
             var domain = new SgbDomain(environmentAdapter, customerModule, accountModule);
 
-            var response = await domain.CreateAccount(new CreateAccountRequest { Debit = 1000, Customer = new Customer { Name = "Adam"}, Nrb = "1342151313" }, new Employee { Pesel = "8803265123" });
+            var response = await domain.CreateAccount(new CreateAccountRequest { Debit = 1000, Customer = new Customer { Name = "Adam"}, Nrb = "1342151313" }, new Employee { Pesel = "8803265123", Id = 1 });
+
+            environmentAdapter = new EnvironmentAdapter.Adapter(new EnvironmentAdapter.UIAdapter.NoAdapter(), new EnvironmentAdapter.ServiceAdapter.FakeAdapter());
+            domain.EnvironmentAdapter = environmentAdapter;
+            response = await domain.CreateAccount(new CreateAccountRequest { Debit = 1000, Customer = new Customer { Name = "Badam" }, Nrb = "000000001" }, new Employee { Pesel = "8745157", Id = 1 });  
+            if(response.Account == null)
+            {
+                try {
+                    response = await domain.ContinueCreateAccount(response.Application.Id, response.Application.Operator, "500");
+                }
+                catch(DomainException e)
+                {
+                    if (e.Message == "Must have different operator")
+                    {
+                        Console.WriteLine("Zmiana operatora");
+                        response = await domain.ContinueCreateAccount(response.Application.Id, new Employee { Id = 2 }, "500");
+                    }
+                    else throw;
+                }
+            }
+
+
             Console.ReadKey();
         }
 
